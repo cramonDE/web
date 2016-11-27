@@ -1,5 +1,2 @@
 ## README
-It is the readme
-
-
-
+Assignment and homework in course Web2.0
