@@ -1,0 +1,23 @@
+body {
+	width: 400px;
+	height: 500px;
+	margin:auto;
+	font-family: "黑体";
+	font-size: 15pt;
+	position: relative;
+	text-align: center;
+	padding-top: 100px;
+	background-image: url("../image/background.jpg");
+	background-size: 130% 200%;
+	background-repeat: no-repeat;
+}
+p {
+	padding: 8px;
+}
+button {
+	border: none;
+    width: 120px;
+    font-size: 13pt;
+    height: 34px;
+    background: rgba(95, 158, 160, 0.23);
+}
