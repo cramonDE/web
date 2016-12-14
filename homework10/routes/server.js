@@ -11,22 +11,65 @@ var app = express();
 
 var mongoose=require('mongoose');
 var User = require('../model/user')
+var router = express.Router();
 
-module.exports.signup = function (req, res) {
-	if (req.param("username") == undefined) {
-		console.log("initial page");
-		res.sendFile(path.resolve('view/index.html'));
+var bodyParser = require('body-parser');
+var urlencodedParser = bodyParser.urlencoded({ extended: false })
+
+// var session = require('express-session')
+//
+//
+//
+// app.use(session({
+// 	secret: 'secret',
+// 	cookie:{
+// 	  maxAge: 1000*60*30
+// 	}
+// }))
+
+
+app.use(express.static(__dirname + '/public'));
+router.get('/regist',function (req, res) {
+	res.sendFile(path.resolve('view/index.html'));
+})
+router.get('/',function(req, res) {
+
+	if (!req.session.logged_in) {
+		if (req.param("username") == undefined) {
+			console.log("initial page");
+			res.sendFile(path.resolve('view/signin.html'));
+		} else {
+			var username = req.param("username").toString();
+			console.log("find user: " +  username);
+			findJson(username, res)
+		}
 	} else {
-		var username = req.param("username").toString();
-		console.log("find user: " +  username);
-		findJson(username, res)
+		if (req.param("username") == undefined) {
+			findJson(req.session.username, res);
+		} else {
+			var username = req.param("username").toString();
+			if (username != req.session.username) {
+				var testUsername = {username:req.session.username};
+				User.find(testUsername,function (err, userDetail) {
+					fs.readFile(__dirname+'/../view/info.html', function(err, data) {
+						var htmlString = data.toString();
+						htmlString = htmlString.replace(/username/, (userDetail[0].username));
+				        htmlString = htmlString.replace(/idididid/, (userDetail[0].id));
+				        htmlString = htmlString.replace(/phonenum/, (userDetail[0].phone));
+				        htmlString = htmlString.replace(/email/, (userDetail[0].email));
+						htmlString = htmlString.replace(/用户详情/, ("只能够访问自己的数据"));
+				        res.send(htmlString);
+					})
+				})
+			}
+		}
 	}
-
-}
-module.exports.signin = function(req, res) {
+})
+router.get('/logout', function(req, res) {
+	req.session.logged_in = 0;
 	res.sendFile(path.resolve('view/signin.html'));
-}
-module.exports.check = function (req, res) {
+})
+router.post('/check', urlencodedParser, function (req, res) {
 	console.log("check password");
 	var testuser = {
 		username:req.body.username,
@@ -45,6 +88,8 @@ module.exports.check = function (req, res) {
 			}
 			console.log("user in database :");
 			console.log(userInDatabase);
+			req.session.logged_in = 1;
+			req.session.username = req.body.username;
 			showInfo(userInDatabase, res);
 		} else {
 			console.log("wrong!");
@@ -58,8 +103,8 @@ module.exports.check = function (req, res) {
 		    })
 		}
 	})
-}
-module.exports.info = function(req, res) {
+})
+router.post('/info', urlencodedParser, function(req, res) {
 	// var resultData = "{";
 	// resultData += '"'+ "username" +'"' +':' + '"' + req.body.username + "\",";
 	// resultData += '"'+ "id" +'"' +':' + '"' + req.body.id + "\",";
@@ -80,7 +125,7 @@ module.exports.info = function(req, res) {
 	var flag = {one:1,two:1,three:1,four:1};
 	errorInfo = "";
 	checkDataRep(user, flag, res);
-}
+})
 function dealWithDataSubmited (user, flag, res) {
 	if (!(flag.one&&flag.two&&flag.three&&flag.four)) {
 		repreload(res);
@@ -192,3 +237,4 @@ function repreload(response) {
 		response.send(htmlString);
     })
 }
+module.exports = router;
