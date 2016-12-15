@@ -16,6 +16,10 @@ var router = express.Router();
 var bodyParser = require('body-parser');
 var urlencodedParser = bodyParser.urlencoded({ extended: false })
 
+app.set('views', __dirname +'/../view');
+app.set('view engine', 'ejs');
+
+
 // var session = require('express-session')
 //
 //
@@ -30,14 +34,20 @@ var urlencodedParser = bodyParser.urlencoded({ extended: false })
 
 app.use(express.static(__dirname + '/public'));
 router.get('/regist',function (req, res) {
-	res.sendFile(path.resolve('view/index.html'));
+	res.render('index.ejs', {
+		errorInfo:'请输入信息'
+	})
+	// res.sendFile(path.resolve('views/index.html'));
 })
 router.get('/',function(req, res) {
 
 	if (!req.session.logged_in) {
 		if (req.param("username") == undefined) {
 			console.log("initial page");
-			res.sendFile(path.resolve('view/signin.html'));
+			// res.sendFile(path.resolve('views/signin.html'));
+			res.render('signin.ejs', {
+				errorInfo:'请输入信息'
+			})
 		} else {
 			var username = req.param("username").toString();
 			console.log("find user: " +  username);
@@ -48,17 +58,36 @@ router.get('/',function(req, res) {
 			findJson(req.session.username, res);
 		} else {
 			var username = req.param("username").toString();
+			console.log(username);
 			if (username != req.session.username) {
 				var testUsername = {username:req.session.username};
 				User.find(testUsername,function (err, userDetail) {
-					fs.readFile(__dirname+'/../view/info.html', function(err, data) {
-						var htmlString = data.toString();
-						htmlString = htmlString.replace(/username/, (userDetail[0].username));
-				        htmlString = htmlString.replace(/idididid/, (userDetail[0].id));
-				        htmlString = htmlString.replace(/phonenum/, (userDetail[0].phone));
-				        htmlString = htmlString.replace(/email/, (userDetail[0].email));
-						htmlString = htmlString.replace(/用户详情/, ("只能够访问自己的数据"));
-				        res.send(htmlString);
+					res.render('info.ejs', {
+						username:userDetail[0].username,
+						userId:userDetail[0].id,
+						phone:userDetail[0].phone,
+						email:userDetail[0].email,
+						errorInfo:"只能够访问自己的数据"
+					})
+					// fs.readFile(__dirname+'/../view/info.html', function(err, data) {
+					// 	var htmlString = data.toString();
+					// 	htmlString = htmlString.replace(/username/, (userDetail[0].username));
+				    //     htmlString = htmlString.replace(/idididid/, (userDetail[0].id));
+				    //     htmlString = htmlString.replace(/phonenum/, (userDetail[0].phone));
+				    //     htmlString = htmlString.replace(/email/, (userDetail[0].email));
+					// 	htmlString = htmlString.replace(/用户详情/, ("只能够访问自己的数据"));
+				    //     res.send(htmlString);
+					// })
+				})
+			} else {
+				var testUsername = {username:req.session.username};
+				User.find(testUsername,function (err, userDetail) {
+					res.render('info.ejs', {
+						username:userDetail[0].username,
+						userId:userDetail[0].id,
+						phone:userDetail[0].phone,
+						email:userDetail[0].email,
+						errorInfo:"用户详情"
 					})
 				})
 			}
@@ -67,7 +96,10 @@ router.get('/',function(req, res) {
 })
 router.get('/logout', function(req, res) {
 	req.session.logged_in = 0;
-	res.sendFile(path.resolve('view/signin.html'));
+	res.render('signin.ejs', {
+		errorInfo:'请输入信息'
+	})
+	// res.sendFile(path.resolve('view/signin.html'));
 })
 router.post('/check', urlencodedParser, function (req, res) {
 	console.log("check password");
@@ -88,7 +120,7 @@ router.post('/check', urlencodedParser, function (req, res) {
 		if (detail.length) {
 			var userInDatabase = {
 				username:detail[0].username,
-				id:detail[0].id,
+				userId:detail[0].id,
 				phone:detail[0].phone,
 				email:detail[0].email
 			}
@@ -99,14 +131,17 @@ router.post('/check', urlencodedParser, function (req, res) {
 			showInfo(userInDatabase, res);
 		} else {
 			console.log("wrong!");
-			errorInfo = "用户名不存在或密码错误"
-			fs.readFile(__dirname+'/../view/signin.html', function (err,data) {
-		        if (err) console.err(err);
-		        console.log("errorinfo: " + errorInfo);
-		        var htmlString = data.toString();
-		        htmlString = htmlString.replace(/请输入信息/, errorInfo);
-				res.send(htmlString);
-		    })
+			errorInfo = "用户名不存在或密码错误";
+			res.render('sigin.ejs',{
+				errorInfo:errorInfo
+			})
+			// fs.readFile(__dirname+'/../view/signin.html', function (err,data) {
+		    //     if (err) console.err(err);
+		    //     console.log("errorinfo: " + errorInfo);
+		    //     var htmlString = data.toString();
+		    //     htmlString = htmlString.replace(/请输入信息/, errorInfo);
+			// 	res.send(htmlString);
+		    // })
 		}
 	})
 })
@@ -160,7 +195,10 @@ function findJson(name, res) {
 	User.find(testUsername,function (err, userDetail) {
 		if (userDetail.length == 0) {
 			console.log(userDetail);
-			res.sendFile(path.resolve('view/index.html'));//There doesn't exist
+			res.render('index.ejs', {
+				errorInfo:'请输入信息'
+			});
+			// res.sendFile(path.resolve('view/index.html'));//There doesn't exist
 
 		} else {
 			console.log(userDetail);
@@ -183,14 +221,22 @@ function findJson(name, res) {
 	// }
 }
 function showInfo(user, res) {
-	fs.readFile(__dirname+'/../view/info.html', function(err, data) {
-		var htmlString = data.toString();
-		htmlString = htmlString.replace(/username/, (user.username));
-        htmlString = htmlString.replace(/idididid/, (user.id));
-        htmlString = htmlString.replace(/phonenum/, (user.phone));
-        htmlString = htmlString.replace(/email/, (user.email));
-        res.send(htmlString);
-	})
+	res.render('info.ejs', {
+		username:user.username,
+		userId:user.id,
+		phone:user.phone,
+		email:user.email,
+		errorInfo:'用户详情'
+	});
+
+	// fs.readFile(__dirname+'/../view/info.html', function(err, data) {
+	// 	var htmlString = data.toString();
+	// 	htmlString = htmlString.replace(/username/, (user.username));
+    //     htmlString = htmlString.replace(/idididid/, (user.id));
+    //     htmlString = htmlString.replace(/phonenum/, (user.phone));
+    //     htmlString = htmlString.replace(/email/, (user.email));
+    //     res.send(htmlString);
+	// })
 }
 function checkDataRep(user, flag, req, res) {
 	var testUsername = {username:user.username};
@@ -242,13 +288,16 @@ function checkDataRep(user, flag, req, res) {
     //     }
     // }
 }
-function repreload(response) {
-    fs.readFile(__dirname+'/../view/index.html', function (err,data) {
-        if (err) console.err(err);
-        console.log("errorinfo: " + errorInfo);
-        var htmlString = data.toString();
-        htmlString = htmlString.replace(/请输入信息/, errorInfo);
-		response.send(htmlString);
-    })
+function repreload(res) {
+	res.render('index.ejs',{
+		errorInfo:errorInfo
+	})
+    // fs.readFile(__dirname+'/../view/index.html', function (err,data) {
+    //     if (err) console.err(err);
+    //     console.log("errorinfo: " + errorInfo);
+    //     var htmlString = data.toString();
+    //     htmlString = htmlString.replace(/请输入信息/, errorInfo);
+	// 	response.send(htmlString);
+    // })
 }
 module.exports = router;
