@@ -1,4 +1,4 @@
-
+var crypto = require('crypto')
 var jsonArray = [];
 var numOfJson = 0;
 var errorInfo;
@@ -78,6 +78,12 @@ router.post('/check', urlencodedParser, function (req, res) {
 		// phone:req.body.phone,
 		// email:req.body.email
 	}
+	var content = testuser.password;//加密的明文；
+  	var md5 = crypto.createHash('md5');//定义加密方式:md5不可逆,此处的md5可以换成任意hash加密的方法名称；
+  	md5.update(content);
+  	var d = md5.digest('hex');  //加密后的值d
+  	console.log("加密的结果：(验证)"+d);
+	testuser.password = d;
 	User.find(testuser, function (err, detail) {
 		if (detail.length) {
 			var userInDatabase = {
@@ -121,15 +127,23 @@ router.post('/info', urlencodedParser, function(req, res) {
 		email:req.body.email
 	})
 	// var Jsonex = JSON.parse(resultData);
+	var content = user.password;//加密的明文；
+	var md5 = crypto.createHash('md5');//定义加密方式:md5不可逆,此处的md5可以换成任意hash加密的方法名称；
+	md5.update(content);
+	var d = md5.digest('hex');  //加密后的值d
+	console.log("加密的结果："+d);
+	user.password = d;
 	console.log(user);
 	var flag = {one:1,two:1,three:1,four:1};
 	errorInfo = "";
-	checkDataRep(user, flag, res);
+	checkDataRep(user, flag, req, res);
 })
-function dealWithDataSubmited (user, flag, res) {
+function dealWithDataSubmited (user, flag, req, res) {
 	if (!(flag.one&&flag.two&&flag.three&&flag.four)) {
 		repreload(res);
 	} else {
+		req.session.username = user.username;
+		req.session.logged_in = 1;
 		user.save(function(err) {
 			if (err) {
 				console.log('保存失败');
@@ -178,7 +192,7 @@ function showInfo(user, res) {
         res.send(htmlString);
 	})
 }
-function checkDataRep(user, flag, res) {
+function checkDataRep(user, flag, req, res) {
 	var testUsername = {username:user.username};
 	var testId = {id:user.id};
 	var testPhone = {phone:user.phone};
@@ -206,7 +220,7 @@ function checkDataRep(user, flag, res) {
 			flag.four = 0;
 			errorInfo = errorInfo + "邮箱重复\n";
 		}
-		dealWithDataSubmited(user, flag, res)
+		dealWithDataSubmited(user, flag, req, res)
 	})
 
 	// for (var x = 0; x < numOfJson; x++) {
