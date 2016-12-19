@@ -20,16 +20,17 @@ $().ready(function () {
 	$("#phone").click(phoneReq);
 	$("#email").change(checkemail);
 	$("#email").click(emailReq);
-	$("#reset").click(function () {
-		$.each($("input[type = 'text']"), function () {
-			$(this).val("");
-		})
-		$.each($("input[type = 'password']"), function () {
-			$(this).val("");
-		})
-	})
+	$("#reset").click(reset)
 	$("#submit").click(subFunc)
 })
+function reset() {
+	$.each($("input[type = 'text']"), function () {
+		$(this).val("");
+	})
+	$.each($("input[type = 'password']"), function () {
+		$(this).val("");
+	})
+}
 function subFunc() {
 	if (!flag.one) flag.errorcode += "用户名不合法\n";
 	if (!flag.two) flag.errorcode += "学号不合法\n";
